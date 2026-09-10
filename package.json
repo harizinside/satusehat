@@ -1,0 +1,52 @@
+{
+  "name": "@harizinside/satusehat",
+  "version": "0.1.0",
+  "description": "SATU SEHAT (Kemkes) Platform SDK for Node.js (TypeScript, ESM, zero runtime dependencies)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./icd10": {
+      "types": "./dist/fhir/coding/icd10.d.ts",
+      "default": "./dist/fhir/coding/icd10.js"
+    },
+    "./icd9cm": {
+      "types": "./dist/fhir/coding/icd9cm.d.ts",
+      "default": "./dist/fhir/coding/icd9cm.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "generate": "node scripts/generate-modules.mjs",
+    "generate:icd": "node scripts/generate-icd.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "satusehat",
+    "satu-sehat",
+    "kemkes",
+    "fhir",
+    "r4",
+    "indonesia",
+    "health"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/harizinside/satusehat.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}
