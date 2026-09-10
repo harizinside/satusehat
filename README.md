@@ -189,11 +189,11 @@ Mints a token, searches master-data provinces, and (optionally, with
 
 - `npm run build` (tsc, strict): clean.
 - **Live-tested against SATU SEHAT staging**, not just compiled: full Rawat
-  Jalan flow (21/23 steps), full Gigi flow (14/14 steps), Master Wilayah +
-  Sarana + most KFA, KYC (routing confirmed, needs real JWE payload to fully
-  exercise), RME (routing confirmed, needs real registered patient/practitioner
-  data + eligible practitioner role to fully exercise).
-- One item remains genuinely open (`Immunization`'s `performer.function`
-  CodeSystem + required Organization actor) — tracked in
-  [`wiki/Known-Issues.md`](wiki/Known-Issues.md) rather than silently guessed
-  further against a rate-limited sandbox.
+  Jalan flow (23/23 steps, incl. MedicationRequest/MedicationDispense), full
+  Gigi flow (14/14 steps), Immunization, Master Wilayah + Sarana + most KFA,
+  KYC (routing confirmed, needs real JWE payload to fully exercise), RME
+  (routing confirmed, needs real registered patient/practitioner data +
+  eligible practitioner role to fully exercise). No open issues at the
+  moment — see [`wiki/Known-Issues.md`](wiki/Known-Issues.md) for the fixes
+  that got each one there and the gotchas worth knowing before you hit them
+  yourself.
