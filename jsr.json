@@ -1,0 +1,12 @@
+{
+  "name": "@harizinside/satusehat",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./icd10": "./src/fhir/coding/icd10.ts",
+    "./icd9cm": "./src/fhir/coding/icd9cm.ts"
+  },
+  "publish": {
+    "exclude": ["scripts", "wiki", "*.md", "!README.md"]
+  }
+}
