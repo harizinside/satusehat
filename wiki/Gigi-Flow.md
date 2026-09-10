@@ -1,6 +1,6 @@
 # Alur Gigi (Dental)
 
-Status: **13/14 langkah confirmed PASS**. Sama pola-nya kayak Rawat Jalan (lihat [Rawat-Jalan-Flow](Rawat-Jalan-Flow.md) buat detail gotcha umum: Medication.extension, PATCH content-type, dll — nggak diulang di sini). Bedanya cuma di bagian pemeriksaan gigi/odontogram.
+Status: **14/14 langkah confirmed PASS**. Sama pola-nya kayak Rawat Jalan (lihat [Rawat-Jalan-Flow](Rawat-Jalan-Flow.md) buat detail gotcha umum: Medication.extension, PATCH content-type, dll — nggak diulang di sini). Bedanya cuma di bagian pemeriksaan gigi/odontogram.
 
 ## Urutan
 
@@ -44,6 +44,6 @@ await client.fhir.encounter... // pakai Observation biasa:
 
 Semua constant ini (`coding.DENTAL_*`) ada di `src/fhir/coding/gigi.ts`, dibangun dari dokumentasi resmi SATU SEHAT (bukan dari collection Postman lama, soalnya collection Gigi nggak punya contoh selengkap ini) dan **udah divalidasi live** — bukan cuma teori dari docs.
 
-## Belum kelar
+## Status: 14/14 confirmed
 
-Procedure "Scaling and Polishing of Teeth" — 2 kode SNOMED yang dicoba (termasuk `18059009`) sama-sama ditolak server (`Code not found`). Butuh contoh Postman/dokumentasi real buat nemuin kode yang bener. Lihat [Known Issues](Known-Issues.md).
+Semua langkah, termasuk `tindakan.procedureTindakanScaling` (`Procedure`), udah confirmed jalan ke sandbox. Field `code.coding` di situ nerima kode SNOMED apapun — cuma pastiin kodenya valid (cek [browser.ihtsdotools.org](https://browser.ihtsdotools.org) kalau ragu), bukan sesuatu yang perlu di-hardcode di SDK.

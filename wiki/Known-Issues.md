@@ -8,7 +8,7 @@ Hal-hal yang masih belum kelar, dan hal-hal yang keliatannya salah tapi sebenarn
 |---|---|---|
 | `MedicationRequest`/`MedicationDispense` (sebelum ketemu contoh) | Kuantitas tablet nolak UCUM (`{tbl}`, `1`) | ✅ **Sudah kelar** — solusinya pake `ORDERABLE_DRUG_FORM_AUDITED.tablet` (code `TAB`), bukan UCUM. Lihat [Rawat-Jalan-Flow](Rawat-Jalan-Flow.md). |
 | `Immunization` | `performer.function` pake CodeSystem yang salah + butuh performer ber-actor Organization | 2x percobaan, dua-duanya ditolak. Belum ada contoh kerja. |
-| Gigi — Procedure "Scaling and Polishing of Teeth" | Kode SNOMED `18059009` dan 1 alternatif lain ditolak (`Code not found`) | 2x percobaan. Belum ada contoh kerja. |
+| ~~Gigi — Procedure "Scaling and Polishing of Teeth"~~ | ✅ **Sudah kelar** — bukan bug SDK, kode SNOMED `18059009` yang ditebak sebelumnya emang gak valid. `procedureTindakanScaling` (`gigi/tindakan.ts`) confirmed jalan normal begitu dikasih kode SNOMED yang bener (contoh: `12491002` "Bleaching of discolored tooth"). Field `code.coding` di sini emang bebas diisi kode SNOMED apapun sesuai tindakan yang beneran dilakukan — bukan harus persis "scaling". |
 
 Kalau nemu contoh Postman/dokumentasi resmi buat salah satu di atas, kasih liat body-nya persis (kayak yang bikin `MedicationRequest` akhirnya kelar) — itu cara paling efektif buat fix cepet, dibanding nebak-nebak terus.
 
