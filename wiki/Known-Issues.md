@@ -4,9 +4,11 @@ Hal-hal yang masih belum kelar, dan hal-hal yang keliatannya salah tapi sebenarn
 
 ## Belum kelar
 
-Nihil buat sekarang — semua yang sempet stuck (MedicationRequest/Dispense, Immunization, Gigi Procedure) udah kelar, lihat bagian di bawah. Kalau ke depannya nemu resource baru yang gagal karena field/kode yang gak jelas: cara paling efektif buat fix cepet adalah kasih liat body contoh yang beneran kerja (Postman/dokumentasi resmi), bukan nebak-nebak terus ke sandbox.
+Nihil buat sekarang — semua yang sempet stuck (MedicationRequest/Dispense, Immunization, Gigi Procedure, KYC encryption) udah kelar, lihat bagian di bawah. Kalau ke depannya nemu resource baru yang gagal karena field/kode yang gak jelas: cara paling efektif buat fix cepet adalah kasih liat body contoh yang beneran kerja (Postman/dokumentasi resmi/reference client resmi di bahasa lain), bukan nebak-nebak terus ke sandbox.
 
 ## Sudah kelar (dari nebak-nebak → contoh real)
+
+**KYC encryption** — dokumentasi prosa bilang `generate-url` punya varian "unencrypted JSON" dan `challenge-code` "gak perlu enkripsi" sama sekali; **dua-duanya salah**, live server nolak keduanya (`"missing begin tag"` / `"Failed to decrypt message"`). Ketauan yang bener dari referensi PHP client resmi SATU SEHAT yang user kasih: envelope RSA-OAEP(sha256)+AES-256-GCM (`wrappedKey(256) + iv(12) + ciphertext + tag(16)`, base64, dibungkus `-----BEGIN/END ENCRYPTED MESSAGE-----`), dikirim `text/plain`. Diimplementasi pake `node:crypto` built-in (zero dependency baru) di `src/kyc/crypto.ts`, **confirmed PASS live** buat `generateKycUrl` dan `generateChallengeCode` (yang terakhir butuh `X-Frame-Token` dari response `generate-url`, bukan `public_key` baru — server reuse key yang udah didaftarkan). Detail lengkap di [KYC-and-RME](KYC-and-RME.md).
 
 **`MedicationRequest`/`MedicationDispense`** — kuantitas tablet nolak UCUM (`{tbl}`, `1`). Solusinya pake `ORDERABLE_DRUG_FORM_AUDITED.tablet` (code `TAB`), bukan UCUM. Detail di [Rawat-Jalan-Flow](Rawat-Jalan-Flow.md).
 

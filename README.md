@@ -160,8 +160,12 @@ live. Highlights:
   not UCUM** — confirmed live after UCUM's own codes (`{tbl}`, `1`) were both
   rejected by the server. `coding.UCUM_COUNT` is marked `@deprecated` pointing
   at the right constant instead.
-- **KYC needs an encrypted (JWE) body** — the SDK sends whatever you pass
-  verbatim; encrypting it with SATU SEHAT's KYC public key is the caller's job.
+- **KYC (`client.kyc.*`)** — envelope encryption (RSA-OAEP-sha256 + AES-256-GCM,
+  matching SATU SEHAT's official PHP client) is built in via `node:crypto`
+  (zero new dependency); you only supply `satuSehatPublicKey` (their published
+  key, not one you generate). `generateChallengeCode` needs the `frameToken`
+  + `privateKey` returned by a preceding `generateKycUrl` call — see
+  [`wiki/KYC-and-RME.md`](wiki/KYC-and-RME.md).
 - **Webhook examples** — `Katalog Webhook` requests target `{{webhook_url}}`
   (your own endpoint). `klaimSwasta.webhook` provides typed parsers
   (`parseWebhookPayloadAs(body, "chargeItemSubmission")`) plus
@@ -191,9 +195,9 @@ Mints a token, searches master-data provinces, and (optionally, with
 - **Live-tested against SATU SEHAT staging**, not just compiled: full Rawat
   Jalan flow (23/23 steps, incl. MedicationRequest/MedicationDispense), full
   Gigi flow (14/14 steps), Immunization, Master Wilayah + Sarana + most KFA,
-  KYC (routing confirmed, needs real JWE payload to fully exercise), RME
-  (routing confirmed, needs real registered patient/practitioner data +
-  eligible practitioner role to fully exercise). No open issues at the
-  moment — see [`wiki/Known-Issues.md`](wiki/Known-Issues.md) for the fixes
-  that got each one there and the gotchas worth knowing before you hit them
-  yourself.
+  full KYC flow (`generateKycUrl` + `generateChallengeCode`, encrypted
+  end-to-end), RME (routing confirmed, needs real registered
+  patient/practitioner data + eligible practitioner role to fully exercise).
+  No open issues at the moment — see
+  [`wiki/Known-Issues.md`](wiki/Known-Issues.md) for the fixes that got each
+  one there and the gotchas worth knowing before you hit them yourself.
