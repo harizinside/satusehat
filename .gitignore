@@ -3,3 +3,5 @@ dist/
 dist-test/
 .env
 *.log
+# Postman collection sources used to regenerate src/ — never committed.
+*.postman_collection.json

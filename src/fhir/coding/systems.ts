@@ -114,4 +114,9 @@ export const SYSTEM = {
   // Kemkes sys-ids singleton namespaces (org-scoped ones go via identifiers.ts)
   ADMINISTRATIVE_AREA: "http://sys-ids.kemkes.go.id/administrative-area",
   KFA: "http://sys-ids.kemkes.go.id/kfa",
+  // National Prescription Number system used by DocumentReference.identifier
+  // to attach MedicationRequest(s) to an issued prescription (the
+  // "No. Resep Nasional" in SATU SEHAT Farmasi). See src/fhir/documentreference.ts
+  // and the `nationalPrescriptionIdentifier()` helper in src/fhir/coding/identifiers.ts.
+  PRESCRIPTION_NATIONAL: "http://sys-ids.kemkes.go.id/prescription/national",
 } as const;

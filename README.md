@@ -3,18 +3,28 @@
 SATU SEHAT (Kemenkes) Platform SDK for Node.js — TypeScript, ESM, zero runtime dependencies.
 
 ```bash
-npm install github:harizinside/satusehat
+npm install @harizinside/satusehat
+# or
+pnpm add @harizinside/satusehat
+yarn add @harizinside/satusehat
+bun add @harizinside/satusehat
+
+# JSR (Deno / Bun / Node)
+npx jsr add @harizinside/satusehat
+deno add jsr:@harizinside/satusehat
 ```
 
 **Full step-by-step integration guide (real order of operations, gotchas, confirmed-working examples): see [`wiki/`](wiki/Home.md).**
 
 Covers the platform's public surface: OAuth2 client-credentials, 39+ FHIR R4
 resources (including Appointment/HealthcareService/AppointmentResponse/
-PractitionerRole/Slot scheduling and FamilyMemberHistory), Master Data
-(wilayah + sarana), KFA (farmasi/alkes formulary & pricing), KYC (faskes),
-national RME consent/link, the Rawat Jalan and Gigi outpatient workflows, the
-private-insurance (Asuransi Swasta) + BPJS-Kesehatan claim modules, ~50 FHIR
-terminology/coding constants, and full ICD-10/ICD-9-CM catalogs.
+PractitionerRole/Slot scheduling, FamilyMemberHistory, and
+**DocumentReference** for the Farmasi e-Resep flow), Master Data (wilayah +
+sarana), KFA (farmasi/alkes formulary & pricing), KYC (faskes), national RME
+consent/link, the Rawat Jalan, Gigi, and **Farmasi (e-Resep + dispensing)**
+outpatient workflows, the private-insurance (Asuransi Swasta) +
+BPJS-Kesehatan claim modules, ~50 FHIR terminology/coding constants, and
+full ICD-10/ICD-9-CM catalogs.
 
 **This SDK has been exercised end-to-end against the real SATU SEHAT staging
 sandbox** — not just compiled. Rawat Jalan (16 steps), Gigi (11 steps), Master
@@ -201,3 +211,14 @@ Mints a token, searches master-data provinces, and (optionally, with
   No open issues at the moment — see
   [`wiki/Known-Issues.md`](wiki/Known-Issues.md) for the fixes that got each
   one there and the gotchas worth knowing before you hit them yourself.
+- **Farmasi (e-Resep + dispensing) — peresepan flow confirmed PASS live
+  against staging** (Encounter → Condition → Observation → MedicationRequest
+  → DocumentReference → No. Resep Nasional → GET by identifier → Encounter
+  close, 13/13 step on 2026-09-24). Pengeluaran (MedicationDispense di apotek)
+  generated dari Postman collection, request/response shapes valid, tapi
+  belum dijalankan ke server — butuh Org Farmasi/Apotek + Location apotek
+  untuk benar-benar kering. Banyak field wajib server-side yang gak ada di
+  body contoh Postman ke-discoversaat smoke (Observation.performer/issued,
+  MedicationRequest.authoredOn, DocumentReference.content, dll), semuanya
+  dicatet di [`wiki/Known-Issues.md`](wiki/Known-Issues.md) + type-nya udah
+  di-tightening di `src/farmasi/*.ts` & `src/fhir/documentreference.ts`.

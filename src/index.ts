@@ -13,6 +13,7 @@ import * as kyc from "./kyc/index.js";
 import * as rme from "./rme/index.js";
 import * as rjBundle from "./rawat-jalan/bundle.js";
 import * as gigiBundle from "./gigi/bundle.js";
+import * as farmasiBundle from "./farmasi/bundle.js";
 import * as webhook from "./klaim-swasta/webhook.js";
 
 // FHIR resources (generated)
@@ -31,6 +32,7 @@ import * as fhirCoverage from "./fhir/coverage.js";
 import * as fhirCoverageEligibilityRequest from "./fhir/coverageeligibilityrequest.js";
 import * as fhirCoverageEligibilityResponse from "./fhir/coverageeligibilityresponse.js";
 import * as fhirDiagnosticReport from "./fhir/diagnosticreport.js";
+import * as fhirDocumentReference from "./fhir/documentreference.js";
 import * as fhirEncounter from "./fhir/encounter.js";
 import * as fhirEpisodeOfCare from "./fhir/episodeofcare.js";
 import * as fhirFamilyMemberHistory from "./fhir/familymemberhistory.js";
@@ -91,6 +93,10 @@ import * as gigiRencanaTindakLanjut from "./gigi/rencana-tindak-lanjut.js";
 import * as gigiTatalaksana from "./gigi/tatalaksana.js";
 import * as gigiTindakan from "./gigi/tindakan.js";
 
+// Farmasi workflow (generated + hand-written bundle re-export)
+import * as farmasiPeresepan from "./farmasi/peresepan.js";
+import * as farmasiPengeluaran from "./farmasi/pengeluaran.js";
+
 // Klaim modules (generated)
 import * as klaimSwastaPrimary from "./klaim-swasta/primary-payor.js";
 import * as klaimSwastaSecondary from "./klaim-swasta/secondary-payor.js";
@@ -118,6 +124,7 @@ export {
   rme,
   rjBundle,
   gigiBundle,
+  farmasiBundle,
   webhook,
   fhirAccount,
   fhirAllergyIntolerance,
@@ -134,6 +141,7 @@ export {
   fhirCoverageEligibilityRequest,
   fhirCoverageEligibilityResponse,
   fhirDiagnosticReport,
+  fhirDocumentReference,
   fhirEncounter,
   fhirEpisodeOfCare,
   fhirFamilyMemberHistory,
@@ -189,6 +197,8 @@ export {
   gigiRencanaTindakLanjut,
   gigiTatalaksana,
   gigiTindakan,
+  farmasiPeresepan,
+  farmasiPengeluaran,
   klaimSwastaPrimary,
   klaimSwastaSecondary,
   klaimSwastaTpa,
@@ -257,6 +267,7 @@ export type FhirNamespaces = {
   coverageEligibilityRequest: Bound<typeof fhirCoverageEligibilityRequest>;
   coverageEligibilityResponse: Bound<typeof fhirCoverageEligibilityResponse>;
   diagnosticReport: Bound<typeof fhirDiagnosticReport>;
+  documentReference: Bound<typeof fhirDocumentReference>;
   encounter: Bound<typeof fhirEncounter>;
   episodeOfCare: Bound<typeof fhirEpisodeOfCare>;
   familyMemberHistory: Bound<typeof fhirFamilyMemberHistory>;
@@ -324,6 +335,13 @@ export type GigiNamespaces = {
   bundle: Bound<typeof gigiBundle>;
 };
 
+/** Farmasi (e-Resep + dispensing) workflow namespaces. */
+export type FarmasiNamespaces = {
+  peresepan: Bound<typeof farmasiPeresepan>;
+  pengeluaran: Bound<typeof farmasiPengeluaran>;
+  bundle: Bound<typeof farmasiBundle>;
+};
+
 /** Private insurance claim namespaces. */
 export type KlaimSwastaNamespaces = {
   primaryPayor: Bound<typeof klaimSwastaPrimary>;
@@ -355,6 +373,7 @@ export type SatuSehatNamespaces = {
   fhir: FhirNamespaces;
   rawatJalan: RawatJalanNamespaces;
   gigi: GigiNamespaces;
+  farmasi: FarmasiNamespaces;
   klaimSwasta: KlaimSwastaNamespaces;
   klaimBpjs: KlaimBpjsNamespaces;
 };
@@ -402,6 +421,7 @@ export function createSatuSehatClient(config: SatuSehatClientConfig): SatuSehatC
       coverageEligibilityRequest: bindModule(client, fhirCoverageEligibilityRequest),
       coverageEligibilityResponse: bindModule(client, fhirCoverageEligibilityResponse),
       diagnosticReport: bindModule(client, fhirDiagnosticReport),
+      documentReference: bindModule(client, fhirDocumentReference),
       encounter: bindModule(client, fhirEncounter),
       episodeOfCare: bindModule(client, fhirEpisodeOfCare),
       familyMemberHistory: bindModule(client, fhirFamilyMemberHistory),
@@ -463,6 +483,11 @@ export function createSatuSehatClient(config: SatuSehatClientConfig): SatuSehatC
       tatalaksana: bindModule(client, gigiTatalaksana),
       tindakan: bindModule(client, gigiTindakan),
       bundle: bindModule(client, gigiBundle),
+    },
+    farmasi: {
+      peresepan: bindModule(client, farmasiPeresepan),
+      pengeluaran: bindModule(client, farmasiPengeluaran),
+      bundle: bindModule(client, farmasiBundle),
     },
     klaimSwasta: {
       primaryPayor: bindModule(client, klaimSwastaPrimary),

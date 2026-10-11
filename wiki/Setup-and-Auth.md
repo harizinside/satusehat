@@ -3,13 +3,21 @@
 ## Install
 
 ```bash
-npm install github:harizinside/satusehat
+npm install @harizinside/satusehat
+# or
+pnpm add @harizinside/satusehat
+yarn add @harizinside/satusehat
+bun add @harizinside/satusehat
+
+# JSR (Deno / Bun / Node)
+npx jsr add @harizinside/satusehat
+deno add jsr:@harizinside/satusehat
 ```
 
 ## Bikin client
 
 ```ts
-import { createSatuSehatClient } from "satusehat";
+import { createSatuSehatClient } from "@harizinside/satusehat";
 
 const client = createSatuSehatClient({
   environment: "staging", // atau "production"

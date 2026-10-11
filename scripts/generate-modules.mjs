@@ -29,13 +29,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const pkgRoot = resolve(here, "..");
 const args = process.argv.slice(2);
 const FORCE = args.includes("--force");
-const onlyArg = args.find((a) => a.startsWith("--only"));
-const ONLY = onlyArg ? onlyArg.split("=")[1]?.split(",") ?? [] : null;
+const onlyIdx = args.indexOf("--only");
+const onlyArg = onlyIdx >= 0 ? args[onlyIdx + 1] ?? "" : args.find((a) => a.startsWith("--only="));
+const ONLY = onlyArg ? onlyArg.split(",").filter(Boolean) : null;
 
 const SRC = {
   fhir: "00. FHIR Resource - Contoh Penggunaan.postman_collection.json",
   rawatJalan: "01. Pelayanan - Rawat Jalan.postman_collection.json",
   gigi: "24. Use Case - Gigi.postman_collection.json",
+  farmasi: "04. Pelayanan - Farmasi.postman_collection.json",
   klaimSwasta: "25. Use Case - Modul Klaim (Asuransi Swasta).postman_collection.json",
   klaimBpjs: "26. Use Case - Modul Klaim (BPJS-K).postman_collection.json",
 };
@@ -86,6 +88,30 @@ const RULES = {
       test: (p) => p.length >= 1,
       file: (p) => `gigi/${kebab(stripNumbering(p[0]))}.ts`,
     },
+  ],
+  farmasi: [
+    { test: (p) => KEBAB_SKIP.includes(p[0]), skip: true },
+    // Org/location setup + patient/nakes lookup already in common/
+    {
+      test: (p) =>
+        p[0].startsWith("00. Struktur Organisasi") || p[0].startsWith("01. Mencari Data"),
+      skip: true,
+    },
+    // Apotek's "Mendaftarkan Lokasi Apotek jika belum dibuat" POST /Location
+    // is the same common/operation — reuse `organization.createLocation()`.
+    {
+      test: (p) =>
+        p[0].startsWith("03. Pengeluaran") &&
+        p.some((seg) => /Lokasi Apotek jika belum dibuat/i.test(seg)),
+      skip: true,
+    },
+    // Per-folder mapping (peresepan vs pengeluaran)
+    { test: (p) => p[0].startsWith("02. Peresepan"), file: () => "farmasi/peresepan.ts" },
+    { test: (p) => p[0].startsWith("03. Pengeluaran"), file: () => "farmasi/pengeluaran.ts" },
+    // "Pengiriman dengan Bundle" subfolder under peresepan & pengeluaran is
+    // a duplicate of the same DocRef/MedRequest GETs plus a bare POST bundle
+    // (already covered by hand-written src/farmasi/bundle.ts).
+    { test: (p) => p.some((seg) => seg === "Pengiriman dengan Bundle"), skip: true },
   ],
   klaimSwasta: [
     { test: (p) => KEBAB_SKIP.includes(p[0]), skip: true },
@@ -144,7 +170,7 @@ const KNOWN_RESOURCES = new Set([
   "Immunization", "ImagingStudy", "EpisodeOfCare", "CarePlan", "QuestionnaireResponse",
   "ServiceRequest", "Specimen", "RelatedPerson", "Coverage", "CoverageEligibilityRequest",
   "CoverageEligibilityResponse", "Account", "ChargeItem", "Invoice", "Claim",
-  "ClaimResponse", "PaymentReconciliation", "PaymentNotice",
+  "ClaimResponse", "PaymentReconciliation", "PaymentNotice", "DocumentReference",
 ]);
 
 const HOST_VARS = /^\{\{(?:base_url|base_url_staging|kyc_base_url|auth_url|auth_url_staging|url)\}\}/;
@@ -160,6 +186,11 @@ function parseRequest(item) {
     queryPart = rest.slice(qi + 1);
     rest = rest.slice(0, qi);
   }
+  // Normalize Postman path-templated segments (`{{Foo_id}}`) to the same
+  // `:id` form Postman uses when the URL spec lacks a defined variable — so
+  // `/Encounter/{{Encounter_id}}` and `/Encounter/:id` (both PUTs in the
+  // Farmasi collection) collapse into one endpoint instead of duplicating.
+  rest = rest.replace(/\{\{[A-Za-z0-9_]+\}\}/g, ":id");
   const path = rest;
   if (!path || path === "/") return null; // e.g. bare {{base_url}} (Bundle composites)
 
@@ -323,14 +354,47 @@ function mergeQueryKeys(target, extra) {
   for (const k of extra) if (!target.includes(k)) target.push(k);
 }
 
-/** Fill in any body fields only present in a later example; keep the first example's values. */
+/** Deep merge: keep first example's values, but pull in any keys (and nested
+ * shapes) that only appear in later examples. JSON Patch arrays keep the
+ * first example as-is. */
 function mergeBody(target, extra) {
   if (target === undefined) return extra;
   if (extra === undefined) return target;
   if (Array.isArray(target) || Array.isArray(extra)) return target; // JSON Patch bodies: keep first
-  if (typeof target !== "object" || typeof extra !== "object") return target;
-  return { ...extra, ...target };
+  if (typeof target !== "object" || typeof extra !== "object" || target === null || extra === null) return target;
+  const out = { ...extra };
+  for (const [k, v] of Object.entries(target)) {
+    out[k] = k in out ? mergeBody(v, out[k]) : v;
+  }
+  return out;
 }
+
+/**
+ * Optional function-name overrides keyed by `${file}::${METHOD} ${path}`.
+ * Without these, the generator derives the function name from the first leaf
+ * request's Postman name — which yields clunky per-variant names when the
+ * same endpoint has many example bodies (e.g. every MedicationRequest variant
+ * collapsing to one `createMedicationRequest`).
+ */
+const FN_RENAME = {
+  // Farmasi: peresepan + DocumentReference/MedicationRequest lookup
+  "farmasi/peresepan.ts::POST /Encounter": "createEncounter",
+  "farmasi/peresepan.ts::PUT /Encounter/:id": "updateEncounter",
+  "farmasi/peresepan.ts::POST /Condition": "createCondition",
+  "farmasi/peresepan.ts::POST /Observation": "createObservation",
+  "farmasi/peresepan.ts::POST /MedicationRequest": "createMedicationRequest",
+  "farmasi/peresepan.ts::POST /DocumentReference": "createDocumentReference",
+  "farmasi/peresepan.ts::GET /DocumentReference/:id": "getDocumentReference",
+  "farmasi/peresepan.ts::GET /DocumentReference": "searchDocumentReference",
+  "farmasi/peresepan.ts::GET /MedicationRequest": "searchMedicationRequest",
+  // Farmasi: pengeluaran (apotek)
+  "farmasi/pengeluaran.ts::GET /DocumentReference": "searchDocumentReference",
+  "farmasi/pengeluaran.ts::GET /MedicationRequest": "searchMedicationRequest",
+  "farmasi/pengeluaran.ts::POST /Encounter": "createEncounter",
+  "farmasi/pengeluaran.ts::PUT /Encounter/:id": "updateEncounter",
+  "farmasi/pengeluaran.ts::POST /MedicationDispense": "createMedicationDispense",
+  "farmasi/pengeluaran.ts::GET /MedicationDispense": "searchMedicationDispense",
+};
 
 function collect(collectionFile, rules) {
   const collection = JSON.parse(readFileSync(join(pkgRoot, collectionFile), "utf8"));
@@ -364,7 +428,8 @@ function collect(collectionFile, rules) {
       continue;
     }
     const ops = modules.get(file);
-    let fn = camelCase(stripNumbering(item.name)) || camelCase(folderPath.at(-1));
+    const renamed = FN_RENAME[`${file}::${endpointKey}`];
+    let fn = renamed ?? camelCase(stripNumbering(item.name)) ?? camelCase(folderPath.at(-1));
     while (ops.some((o) => o.fn === fn)) fn = fn.replace(/\d+$/, "") + (countSuffix(ops, fn) + 2);
     const op = { ...parsed, fn, requestName: item.name, folder: folderPath.at(-1) };
     index.set(endpointKey, op);

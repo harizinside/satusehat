@@ -1,4 +1,5 @@
 import type { Identifier } from "../types.js";
+import { SYSTEM } from "./systems.js";
 
 /**
  * Fixed Kemkes identifier-system namespaces (`Identifier.system` values that
@@ -57,3 +58,14 @@ export const identifiers = {
   paspor: (paspor: string): Identifier => ({ system: IDENTIFIER_SYSTEM.paspor, value: paspor }),
   ihsNumber: (ihs: string): Identifier => ({ system: IDENTIFIER_SYSTEM.ihsNumber, value: ihs }),
 } as const;
+
+/**
+ * Build a No. Resep Nasional `Identifier` (Farmasi flow) — the value issued
+ * by SATUSEHAT in response to `POST /DocumentReference` and used to look up
+ * the prescription via `GET /DocumentReference?identifier=<this>&_include=...`
+ * or `GET /MedicationRequest?identifier=<this>`. Format is server-defined
+ * (the examples use shapes like `240527-GUS226E`).
+ */
+export function nationalPrescriptionIdentifier(no: string): Identifier {
+  return { system: SYSTEM.PRESCRIPTION_NATIONAL, value: no };
+}

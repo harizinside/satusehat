@@ -77,3 +77,66 @@ Server staging SATU SEHAT nolak tanggal yang keliatan "di masa depan" relatif ke
 ## Endpoint yang udah dimatiin server (bukan bug SDK)
 
 Lihat [Master-Data-and-KFA](Master-Data-and-KFA.md) — 4 fungsi KFA v1 (ATC/tag metadata) beneran `404`, dan dokumentasi resmi konfirmasi endpoint-nya udah nggak ada lagi.
+
+## Observation (Farmasi BB/TB) — `issued` dan `performer` wajib
+
+**Ditemukan live (farmasi smoke 2026-09-24):** `POST /Observation` nolak dengan `400 Element not found: Observation.issued (RuleNumber: 10296)` dan `400 Reference is mandatory : Observation.performer (RuleNumber: 10383)` kalau dua field itu gak ada. Interface `CreateObservationBody` di `src/farmasi/peresepan.ts` (generated dari body contoh Postman) nge-mark keduanya sebagai `?`, jadi TypeScript gak ngewajibin — tapi server emang ngewajibin.
+
+**Fix:** tambah `performer` (Reference ke Practitioner) + `issued` (ISO timestamp kapan observasi direkam). Contoh body yang lulus:
+```ts
+{
+  resourceType: "Observation",
+  status: "final",
+  issued: new Date().toISOString(), // wajib — RuleNumber 10296
+  performer: [{ reference: `Practitioner/${pracId}` }], // wajib — RuleNumber 10383
+  category: [{ coding: [{ system: coding.SYSTEM.OBSERVATION_CATEGORY, code: "vital-signs" }] }],
+  code: { coding: [{ system: coding.SYSTEM.LOINC, code: "29463-7", display: "Body weight" }] },
+  subject: { reference: `Patient/${patientId}` },
+  encounter: { reference: `Encounter/${encId}` },
+  effectiveDateTime: encounterStart,
+  valueQuantity: { value: 70, unit: "kg", system: coding.SYSTEM.UCUM, code: "kg" },
+}
+```
+
+## Farmasi peresepan (e-Resep) — field wajib yang gak ada di body contoh
+
+Ditemukan live saat smoke farmasi di staging (2026-09-24). Generator ngikutin body contoh di Postman collection persis, jadi banyak field di-mark `?` padahal server ngewajibin. Fix TypeScript-nya adalah mark jadi required (lihat diff di `src/farmasi/peresepan.ts`), fix body-nya adalah:
+
+1. **`Observation.performer` (RuleNumber 10383) dan `Observation.issued` (RuleNumber 10296) WAJIB.** Body contoh Postman gak punya dua-duanya, server langsung nolak `POST /Observation`. Contoh BB yang lulus:
+   ```ts
+   {
+     resourceType: "Observation",
+     status: "final",
+     issued: new Date().toISOString(),
+     performer: [{ reference: `Practitioner/${pracId}` }],
+     category: [{ coding: [{ system: coding.SYSTEM.OBSERVATION_CATEGORY, code: "vital-signs" }] }],
+     code: { coding: [{ system: coding.SYSTEM.LOINC, code: "29463-7", display: "Body weight" }] }],
+     subject: { reference: `Patient/${patientId}` },
+     encounter: { reference: `Encounter/${encId}` },
+     effectiveDateTime: encounterStart,
+     valueQuantity: { value: 70, unit: "kg", system: coding.SYSTEM.UCUM, code: "kg" },
+   }
+   ```
+
+2. **`MedicationRequest.authoredOn` (RuleNumber 10337) WAJIB** — TypeScript-nya saat ini `?`, harus `string` (ISO timestamp). Server nolak tanpa field ini.
+
+3. **`MedicationRequest.contained.Medication` wajib punya 3 hal** (server bener-bener ngecek tiap contained):
+   - **`identifier[0].system`** harus `http://sys-ids.kemkes.go.id/prescription-item/{orgId}` — format path `/{orgId}` (bukan `|{orgId}` kayak identifier biasa). Salah format → **RuleNumber 10380 "Wrong organization ID provided by system URL"**. Contoh benar:
+     ```ts
+     identifier: [{ system: coding.kemkesResourceIdentifierSystem("prescription-item", orgId), value: "..." }]
+     ```
+   - **`extension[0]`** — pakai `coding.medicationTypeExtension(coding.KEMKES_MEDICATION_TYPE.nonCompound)` (atau `.divideIntoEqualParts` / `.givesOfSuchDoses`). Tanpa → **RuleNumber 10031 "Element not found: Medication.extension"**. Lihat juga gotcha umum Medication.extension di [atas](#kode-yang-di-generate-tapi-ternyata-field-nya-wajib).
+   - **`form.coding[0].system`** harus `http://terminology.kemkes.go.id/CodeSystem/medication-form` (bukan HL7 `v3-orderableDrugForm`). Code `BS066` = tablet, `BS084` = tetes mata, dll — lihat `coding.KEMKES_MEDICATION_FORM.*`. Salah → **RuleNumber 10025 "Invalid coding system"**.
+
+4. **`DocumentReference.content` WAJIB minimal 1 entry** (server nolak `400 missing required field "content"`). Real-world isinya PDF e-Resep (`contentType: "application/pdf"`, `url: <URL ke file>`) plus `format` dari `http://terminology.kemkes.go.id/CodeSystem/documentformat`. Body contoh di Postman collection (`Homepage rumah sakit`) emang valid shape tapi nge-template jadi PDF asli di production.
+
+5. **No. Resep Nasional muncul di `DocumentReference.masterIdentifier`, bukan `identifier`.** Response body punya `masterIdentifier: {system: "http://sys-ids.kemkes.go.id/prescription/national", value: "NRN-260924-XXXXXX"}`. Helper `coding.nationalPrescriptionIdentifier()` di-extract ke `value` ini buat lookup. Format server-defined, jangan di-parse — contoh live: `NRN-260924-RFJLZ6U`.
+
+6. **`Encounter.diagnosis` (RuleNumber 10457) WAJIB** waktu close (PUT status `finished`), walaupun Condition-nya udah di-`POST` terpisah. Reference Condition yang udah ada:
+   ```ts
+   diagnosis: [{ condition: { reference: `Condition/${conditionId}` }, rank: 1 }]
+   ```
+
+7. **`Encounter.statusHistory` terakhir wajib punya `end` (RuleNumber 10122).** Server strict soal `every statusHistory period start and end must be filled`. Trik: `finished` entry `period: { start: now, end: now }` (atau end = waktu close aktual).
+
+8. **`_include=DocumentReference:related` di staging gak ngepull MedicationRequest/Observation yang di-attach** — search by `identifier=<no-resep>` di `/MedicationRequest` jalan (langsung balikin 1 entry yg bener), tapi `DocumentReference` cuma balikin DocRef itu sendiri tanpa `_include`. Mungkin butuh waktu buat indexing, atau support-nya belum aktif di server ini. Workaround: lookup terpisah di `/MedicationRequest?identifier=...` (yang jalan) buat dapet MedReq yg di-attach ke resep.

@@ -31,7 +31,7 @@ await client.fhir.location.locationSearchByIdentifier({ name: "poli" });
 ## 3. Cari Patient (search-only + create)
 
 ```ts
-import { nikIdentifier } from "satusehat";
+import { nikIdentifier } from "@harizinside/satusehat";
 
 const bundle = await client.search.searchPatient({ identifier: nikIdentifier(nik) });
 // bundle.entry[].resource.id — bisa ada banyak duplikat, cari yang use:"official"
