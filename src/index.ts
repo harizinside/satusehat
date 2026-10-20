@@ -228,7 +228,7 @@ export type {
 export { SatuSehatClient, SatuSehatApiError };
 export type { SatuSehatClientConfig, SatuSehatEnvironment } from "./core/client.js";
 export type { FhirBundle, FhirPatchOperation, FhirResource } from "./fhir/types.js";
-export type { Coding } from "./fhir/types.js";
+export type { Coding, CodingSet } from "./fhir/types.js";
 
 /**
  * Maps `fn(client, ...args)` to `fn(...args)` so module namespaces can hang
