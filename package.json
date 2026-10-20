@@ -47,7 +47,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/harizinside/satusehat.git"
+    "url": "git+https://github.com/harizinside/satusehat.git"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
