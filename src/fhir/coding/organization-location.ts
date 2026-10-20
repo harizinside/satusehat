@@ -1,8 +1,21 @@
 import { SYSTEM } from "./systems.js";
-import type { Coding } from "../types.js";
+import type { CodingSet } from "../types.js";
 
 /** FHIR R4 `Organization.type` (extensible). */
-export const ORGANIZATION_TYPE = {
+export const ORGANIZATION_TYPE: CodingSet<
+  | "prov"
+  | "dept"
+  | "team"
+  | "govt"
+  | "insured"
+  | "pay"
+  | "edu"
+  | "religious"
+  | "crs"
+  | "cg"
+  | "bus"
+  | "other"
+> = {
   prov: { system: SYSTEM.ORGANIZATION_TYPE, code: "prov", display: "Healthcare Provider" },
   dept: { system: SYSTEM.ORGANIZATION_TYPE, code: "dept", display: "Hospital Department" },
   team: { system: SYSTEM.ORGANIZATION_TYPE, code: "team", display: "Organizational team" },
@@ -15,15 +28,29 @@ export const ORGANIZATION_TYPE = {
   cg: { system: SYSTEM.ORGANIZATION_TYPE, code: "cg", display: "Community Group" },
   bus: { system: SYSTEM.ORGANIZATION_TYPE, code: "bus", display: "Non-Healthcare Business" },
   other: { system: SYSTEM.ORGANIZATION_TYPE, code: "other", display: "Other" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** Kemkes `organization-type` (faskes levels) — audited examples only. */
-export const KEMKES_ORGANIZATION_TYPE = {
+export const KEMKES_ORGANIZATION_TYPE: CodingSet<"fktp"> = {
   fktp: { system: SYSTEM.KEMKES_ORGANIZATION_TYPE, code: "FKTP", display: "Fasilitas Kesehatan Tingkat 1" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** FHIR R4 `Location.physicalType` (example codes). */
-export const LOCATION_PHYSICAL_TYPE = {
+export const LOCATION_PHYSICAL_TYPE: CodingSet<
+  | "building"
+  | "wing"
+  | "ward"
+  | "level"
+  | "corridor"
+  | "room"
+  | "vehicle"
+  | "house"
+  | "cabinet"
+  | "road"
+  | "area"
+  | "jurisdiction"
+  | "bed"
+> = {
   building: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "bu", display: "Building" },
   wing: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "wi", display: "Wing" },
   ward: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "wa", display: "Ward" },
@@ -37,10 +64,10 @@ export const LOCATION_PHYSICAL_TYPE = {
   area: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "area", display: "Area" },
   jurisdiction: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "jdn", display: "Jurisdiction" },
   bed: { system: SYSTEM.LOCATION_PHYSICAL_TYPE, code: "bd", display: "Bed" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** FHIR R4 `Organization.contact.purpose` (extensible). */
-export const CONTACT_ENTITY_TYPE = {
+export const CONTACT_ENTITY_TYPE: CodingSet<"billing" | "admin" | "hr" | "payroll" | "press" | "legal" | "accounting"> = {
   billing: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "BILL", display: "Billing" },
   admin: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "ADMIN", display: "Administrative" },
   hr: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "HR", display: "Human Resource" },
@@ -48,10 +75,19 @@ export const CONTACT_ENTITY_TYPE = {
   press: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "PRESS", display: "Press" },
   legal: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "LEGAL", display: "Legal" },
   accounting: { system: SYSTEM.CONTACT_ENTITY_TYPE, code: "ACCOUNTING", display: "Accounting" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** Kemkes `location-type` (SATUSEHAT faskes room/location classes) — audited examples only. */
-export const KEMKES_LOCATION_TYPE = {
+export const KEMKES_LOCATION_TYPE: CodingSet<
+  | "tempatTidur"
+  | "igd"
+  | "icu"
+  | "hcu"
+  | "ruangRawatInap"
+  | "ruangOperasi"
+  | "tempatMeninggalFaskes"
+  | "alamatMati"
+> = {
   tempatTidur: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "RT0004", display: "Tempat Tidur" },
   igd: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "RT0006", display: "Instalasi Gawat Darurat" },
   icu: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "RT0007", display: "Ruang Perawatan Intensif Umum (ICU)" },
@@ -60,26 +96,26 @@ export const KEMKES_LOCATION_TYPE = {
   ruangOperasi: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "RT0025", display: "Ruang Operasi" },
   tempatMeninggalFaskes: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "LT000002", display: "Tempat Meninggal Faskes" },
   alamatMati: { system: SYSTEM.KEMKES_LOCATION_TYPE, code: "LT000005", display: "Alamat Mati" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** Kemkes inpatient service classes for Location — audited examples only. */
-export const KEMKES_LOCATION_SERVICE_CLASS_INPATIENT = {
+export const KEMKES_LOCATION_SERVICE_CLASS_INPATIENT: CodingSet<"kelas1" | "kelas2" | "kelas3" | "vip"> = {
   kelas1: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_INPATIENT, code: "1", display: "Kelas 1" },
   kelas2: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_INPATIENT, code: "2", display: "Kelas 2" },
   kelas3: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_INPATIENT, code: "3", display: "Kelas 3" },
   vip: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_INPATIENT, code: "vip", display: "Kelas VIP" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** Kemkes outpatient service classes for Location — per the official rme-rawat-jalan doc. */
-export const KEMKES_LOCATION_SERVICE_CLASS_OUTPATIENT = {
+export const KEMKES_LOCATION_SERVICE_CLASS_OUTPATIENT: CodingSet<"reguler" | "eksekutif"> = {
   reguler: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_OUTPATIENT, code: "reguler", display: "Kelas Reguler" },
   eksekutif: { system: SYSTEM.KEMKES_LOCATION_SERVICE_CLASS_OUTPATIENT, code: "eksekutif", display: "Kelas Eksekutif" },
-} as const satisfies Record<string, Coding>;
+};
 
 /** Kemkes `locationUpgradeClass` — per the official rme-rawat-jalan doc. */
-export const KEMKES_LOCATION_UPGRADE_CLASS = {
+export const KEMKES_LOCATION_UPGRADE_CLASS: CodingSet<"kelasTetap" | "naikKelas" | "turunKelas" | "titipRawat"> = {
   kelasTetap: { system: SYSTEM.KEMKES_LOCATION_UPGRADE_CLASS, code: "kelas-tetap", display: "Kelas Tetap Perawatan" },
   naikKelas: { system: SYSTEM.KEMKES_LOCATION_UPGRADE_CLASS, code: "naik-kelas", display: "Kenaikan Kelas Perawatan" },
   turunKelas: { system: SYSTEM.KEMKES_LOCATION_UPGRADE_CLASS, code: "turun-kelas", display: "Penurunan Kelas Perawatan" },
   titipRawat: { system: SYSTEM.KEMKES_LOCATION_UPGRADE_CLASS, code: "titip-rawat", display: "Titip Kelas Perawatan" },
-} as const satisfies Record<string, Coding>;
+};

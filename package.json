@@ -1,6 +1,6 @@
 {
   "name": "@harizinside/satusehat",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "SATU SEHAT (Kemkes) Platform SDK for Node.js (TypeScript, ESM, zero runtime dependencies)",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,7 +26,8 @@
     "build": "tsc",
     "generate": "node scripts/generate-modules.mjs",
     "generate:icd": "node scripts/generate-icd.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "check:jsr": "npx --yes jsr publish --dry-run --allow-dirty"
   },
   "engines": {
     "node": ">=18"

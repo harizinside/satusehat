@@ -7,6 +7,9 @@ export interface Coding {
   display?: string;
 }
 
+/** A named set of `Coding`s, e.g. `coding.ENCOUNTER_CLASS.ambulatory`. */
+export type CodingSet<K extends string> = { readonly [P in K]: Coding };
+
 /** A single FHIR `Identifier` — `{system, value}`. Not a `Coding`: the value field is `value`, not `code`. */
 export interface Identifier {
   system: string;

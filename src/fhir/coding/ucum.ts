@@ -1,5 +1,5 @@
 import { SYSTEM } from "./systems.js";
-import type { Coding } from "../types.js";
+import type { CodingSet } from "../types.js";
 
 /**
  * Common UCUM (Unified Code for Units of Measure) unit codes for medical
@@ -20,7 +20,7 @@ import type { Coding } from "../types.js";
  * full UCUM grammar. Treat these as best-guess placeholders until verified
  * against a real working example.
  */
-export const UCUM_TIME = {
+export const UCUM_TIME: CodingSet<"second" | "minute" | "hour" | "day" | "week" | "month" | "year"> = {
   second: { system: SYSTEM.UCUM, code: "s", display: "second" },
   minute: { system: SYSTEM.UCUM, code: "min", display: "minute" },
   hour: { system: SYSTEM.UCUM, code: "h", display: "hour" },
@@ -28,19 +28,19 @@ export const UCUM_TIME = {
   week: { system: SYSTEM.UCUM, code: "wk", display: "week" },
   month: { system: SYSTEM.UCUM, code: "mo", display: "month" },
   year: { system: SYSTEM.UCUM, code: "a", display: "year" },
-} as const satisfies Record<string, Coding>;
+};
 
-export const UCUM_MASS = {
+export const UCUM_MASS: CodingSet<"microgram" | "milligram" | "gram" | "kilogram"> = {
   microgram: { system: SYSTEM.UCUM, code: "ug", display: "microgram" },
   milligram: { system: SYSTEM.UCUM, code: "mg", display: "milligram" },
   gram: { system: SYSTEM.UCUM, code: "g", display: "gram" },
   kilogram: { system: SYSTEM.UCUM, code: "kg", display: "kilogram" },
-} as const satisfies Record<string, Coding>;
+};
 
-export const UCUM_VOLUME = {
+export const UCUM_VOLUME: CodingSet<"milliliter" | "liter"> = {
   milliliter: { system: SYSTEM.UCUM, code: "mL", display: "milliliter" },
   liter: { system: SYSTEM.UCUM, code: "L", display: "liter" },
-} as const satisfies Record<string, Coding>;
+};
 
 /**
  * @deprecated Confirmed wrong against a real working example: SATU SEHAT
@@ -52,10 +52,10 @@ export const UCUM_VOLUME = {
  * (and the pointer to the right constant) is visible instead of silently
  * removed; do not use for new code.
  */
-export const UCUM_COUNT = {
+export const UCUM_COUNT: CodingSet<"tablet" | "capsule" | "drop" | "applicationUnit" | "internationalUnit"> = {
   tablet: { system: SYSTEM.UCUM, code: "{tbl}", display: "tablet" },
   capsule: { system: SYSTEM.UCUM, code: "{cap}", display: "capsule" },
   drop: { system: SYSTEM.UCUM, code: "{drop}", display: "drop" },
   applicationUnit: { system: SYSTEM.UCUM, code: "{app}", display: "application" },
   internationalUnit: { system: SYSTEM.UCUM, code: "[iU]", display: "international unit" },
-} as const satisfies Record<string, Coding>;
+};

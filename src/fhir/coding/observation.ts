@@ -1,8 +1,18 @@
 import { SYSTEM } from "./systems.js";
-import type { Coding } from "../types.js";
+import type { CodingSet } from "../types.js";
 
 /** FHIR R4 `Observation.category` — all 9 official codes (SATUSEHAT examples only exercise a subset). */
-export const OBSERVATION_CATEGORY = {
+export const OBSERVATION_CATEGORY: CodingSet<
+  | "socialHistory"
+  | "vitalSigns"
+  | "imaging"
+  | "laboratory"
+  | "procedure"
+  | "survey"
+  | "exam"
+  | "therapy"
+  | "activity"
+> = {
   socialHistory: { system: SYSTEM.OBSERVATION_CATEGORY, code: "social-history", display: "Social History" },
   vitalSigns: { system: SYSTEM.OBSERVATION_CATEGORY, code: "vital-signs", display: "Vital Signs" },
   imaging: { system: SYSTEM.OBSERVATION_CATEGORY, code: "imaging", display: "Imaging" },
@@ -12,14 +22,29 @@ export const OBSERVATION_CATEGORY = {
   exam: { system: SYSTEM.OBSERVATION_CATEGORY, code: "exam", display: "Exam" },
   therapy: { system: SYSTEM.OBSERVATION_CATEGORY, code: "therapy", display: "Therapy" },
   activity: { system: SYSTEM.OBSERVATION_CATEGORY, code: "activity", display: "Activity" },
-} as const satisfies Record<string, Coding>;
+};
 
 /**
  * FHIR R4 `Observation.interpretation` — the common subset of
  * v3-ObservationInterpretation (the binding is formally extensible over the
  * full v3 catalog; these are the widely used result-interpretation codes).
  */
-export const OBSERVATION_INTERPRETATION = {
+export const OBSERVATION_INTERPRETATION: CodingSet<
+  | "high"
+  | "low"
+  | "criticallyHigh"
+  | "criticallyLow"
+  | "significantlyHigh"
+  | "significantlyLow"
+  | "normal"
+  | "abnormal"
+  | "criticallyAbnormal"
+  | "susceptible"
+  | "resistant"
+  | "intermediate"
+  | "positive"
+  | "negative"
+> = {
   high: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "H", display: "High" },
   low: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "L", display: "Low" },
   criticallyHigh: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "HH", display: "Critical high" },
@@ -34,4 +59,4 @@ export const OBSERVATION_INTERPRETATION = {
   intermediate: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "I", display: "Intermediate" },
   positive: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "POS", display: "Positive" },
   negative: { system: SYSTEM.OBSERVATION_INTERPRETATION, code: "NEG", display: "Negative" },
-} as const satisfies Record<string, Coding>;
+};
