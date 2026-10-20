@@ -199,3 +199,37 @@ Semua item di bawah **✅ confirmed PASS di production** tanggal 2026-10-20. Isi
 | ✅ | 19 | EpisodeOfCare | `fhir.episodeOfCare.episodeofcareCreate` | template: `status: "active"` (bukan finished), type `TB-SO`, `diagnosis` = Condition #2, `careManager` dokter. ⚠️ otomatis kedaftar ke registry TB (poin 4) | – |
 
 Urutan create yang dipake (ngikutin dependency): Encounter → Medication → Condition → Observation → Procedure → Composition → Immunization → MedicationRequest → MedicationDispense → AllergyIntolerance → ServiceRequest → ClinicalImpression → Specimen → DiagnosticReport → ImagingStudy → CarePlan → MedicationStatement → QuestionnaireResponse → EpisodeOfCare → close Encounter.
+
+### Mana yang bisa diisi netral, mana yang nggak
+
+"Netral" artinya isinya ga nyatet kejadian klinis apa pun. Teks bebas cukup `"-"`, terus field kode yang wajib diisi pakai kode yang artinya "cuma pemeriksaan umum" atau "ga ada apa-apa". Semua kode di bawah ✅ confirmed lolos production (2026-10-20).
+
+| # | Resource | Kategori | Isi / alasan |
+|---|---|---|---|
+| 1 | Kunjungan Pasien (Encounter) | ✅ Netral | Cuma struktur kunjungan: AMB, `arrived`, pasien, dokter, lokasi |
+| 2 | Kondisi / Diagnosis (Condition) | ✅ Netral | ICD-10 `Z00.0` (General medical examination) |
+| 3 | Observasi (Observation) | ❌ Butuh kode klinis | Kode LOINC harus jenis pemeriksaan beneran. Nilainya aja yang bisa `0` |
+| 4 | Tindakan (Procedure) | ✅ Netral | ICD-9-CM `89.7` (General physical examination) |
+| 5 | Resume Diet (Composition) | ✅ Netral | Teks diet `"-"`, kode LOINC cuma tipe dokumen |
+| 6 | Imunisasi (Immunization) | 🟡 Bisa kalau ada KFA | Harus kode KFA **vaksin** + CVX. Dose bisa `0` |
+| 7 | Resep Obat (MedicationRequest) | 🟡 Bisa kalau ada KFA | Lewat Medication. Quantity minimal `1` |
+| 8 | Tebus Obat (MedicationDispense) | 🟡 Bisa kalau ada KFA | Lewat Medication. Quantity minimal `1` |
+| 9 | Alergi Intoleran (AllergyIntolerance) | ✅ Netral | SNOMED `716186003` (No known allergy) |
+| 10 | Radiologi (ImagingStudy) | ❌ Butuh kode klinis | Modality DICOM + ServiceRequest. **Ga bisa ditarik lagi** |
+| 11 | Permintaan Pemeriksaan (ServiceRequest) | ❌ Butuh kode klinis | Kode tes lab LOINC (teksnya bisa `"-"`) |
+| 12 | Impresi Klinis (ClinicalImpression) | ✅ Netral | `summary: "-"` |
+| 13 | Spesimen (Specimen) | ❌ Butuh kode klinis | Jenis spesimen SNOMED + ServiceRequest. Quantity bisa `0` |
+| 14 | Laporan Pemeriksaan (DiagnosticReport) | ❌ Butuh kode klinis | Kode tes lab LOINC + ServiceRequest/Specimen/Observation |
+| 15 | Rencana Perawatan (CarePlan) | ✅ Netral | `title` / `description: "-"` |
+| 16 | Catatan Pengobatan (MedicationStatement) | 🟡 Bisa kalau ada KFA | Lewat Medication. Dose bisa `0` |
+| 17 | Respon Kuesioner (QuestionnaireResponse) | ✅ Netral | `Q0007`, 1 item, jawaban `OV000052` "Sesuai" |
+| 18 | Data Obat (Medication) | 🟡 Bisa kalau ada KFA | Kode obat KFA. Jadi dasar buat #7, #8, #16 |
+| 19 | Episode Perawatan (EpisodeOfCare) | ❌ Butuh kode klinis | Type program penyakit (`TB-SO`), **otomatis kedaftar ke registry TB** |
+
+| Kategori | Jumlah |
+|---|---|
+| ✅ Netral tanpa KFA | 8 |
+| 🟡 Bisa kalau ada KFA | +5 → **13** |
+| ❌ Tetap butuh kode klinis beneran | 6 |
+
+Catatan: resource 🟡 tetap nyatet obat/vaksin beneran. KFA cuma bikin field-nya bisa diisi, isinya tetap ga netral. Kalau mau test koneksi production dengan dampak sekecil mungkin, cukup kirim yang ✅. Jangan kirim ImagingStudy sama EpisodeOfCare kalau ga ada kejadian klinisnya.
