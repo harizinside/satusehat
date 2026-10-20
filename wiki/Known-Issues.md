@@ -141,3 +141,61 @@ Ditemukan live saat smoke farmasi di staging (2026-09-24). Generator ngikutin bo
 7. **`Encounter.statusHistory` terakhir wajib punya `end` (RuleNumber 10122).** Server strict soal `every statusHistory period start and end must be filled`. Trik: `finished` entry `period: { start: now, end: now }` (atau end = waktu close aktual).
 
 8. **`_include=DocumentReference:related` di staging gak ngepull MedicationRequest/Observation yang di-attach** — search by `identifier=<no-resep>` di `/MedicationRequest` jalan (langsung balikin 1 entry yg bener), tapi `DocumentReference` cuma balikin DocRef itu sendiri tanpa `_include`. Mungkin butuh waktu buat indexing, atau support-nya belum aktif di server ini. Workaround: lookup terpisah di `/MedicationRequest?identifier=...` (yang jalan) buat dapet MedReq yg di-attach ke resep.
+
+## Production e2e (2026-10-20) — 19 resource, data minimal
+
+Dijalanin ke **production** pake data seminimal mungkin (angka diisi `0` kalau bisa), terus semua record ditarik lagi. Hasilnya 19/19 PASS: Encounter, Condition, Observation, Procedure, Composition, Immunization, MedicationRequest, MedicationDispense, AllergyIntolerance, ImagingStudy, ServiceRequest, ClinicalImpression, Specimen, DiagnosticReport, CarePlan, MedicationStatement, QuestionnaireResponse, Medication, EpisodeOfCare. Yang beda dari staging atau gak keliatan dari dokumentasi:
+
+1. **ID internal poli ≠ ID Location.** Nilai `identifier` Location (misal UUID dari SIMRS lu) bukan `Location.id` SATU SEHAT. Kalau langsung dipake di `Location/<id>` hasilnya `404 storage_error`. Cari `id`-nya dulu:
+   ```ts
+   await client.request("GET", "/Location", { query: { identifier: `http://sys-ids.kemkes.go.id/location/${orgId}|${internalId}` } });
+   // atau semua Location punya org: { organization: orgId }
+   ```
+
+2. **Nilai `0` ditolak di quantity obat**, walaupun pesannya bilang "equal or more than 0":
+   - `MedicationRequest.dosageInstruction[].doseAndRate[].doseQuantity.value` (RuleNumber 10343) dan `dispenseRequest.quantity.value` (10346)
+   - `MedicationDispense.daysSupply.value` (10350) dan `quantity.value` (10468)
+
+   Kalau di resource lain, `0` diterima: `Observation.valueQuantity`, `Immunization.doseQuantity`, `Specimen.collection.quantity`, `ImagingStudy.numberOfSeries/numberOfInstances`, `MedicationStatement.dosage[].doseAndRate[].doseQuantity`.
+
+3. **`EpisodeOfCare` ga bisa di-create langsung `finished`** (RuleNumber 10109/10110). Create pakai `active` dulu, baru diupdate. `period.end` cuma boleh diisi kalau status `cancelled`/`finished` (10405).
+
+4. **`EpisodeOfCare` TB dapet identifier registry dari server.** Abis create, server nambahin `{system: "http://sys-ids.kemkes.go.id/episode-of-care/registry-id/", value: "TBSC..."}`. Akibatnya **PUT selalu gagal**: kalau identifier itu ikut dikirim balik kena `400 Invalid identifier system` (10458), kalau dibuang kena `403 consent or privacy rules`. Ubah status pakai **PATCH** aja:
+   ```ts
+   await client.fhir.episodeOfCare.episodeofcarePatch(id, [{ op: "replace", path: "/status", value: "entered-in-error" }]);
+   ```
+
+5. **Narik record (ga ada DELETE) caranya PUT hasil GET** (buang `meta`), terus ganti statusnya:
+   - Kebanyakan resource cukup `status: "entered-in-error"`, termasuk Medication.
+   - Condition/AllergyIntolerance pakai `verificationStatus` = `entered-in-error`, **dan `clinicalStatus` wajib dihapus**. Kalau masih ada, server balikin `400 structure: unparseable_resource` (aturan FHIR: clinicalStatus ga boleh ada kalau entered-in-error).
+   - **ImagingStudy ga bisa ditarik.** `entered-in-error` sama `cancelled` dua-duanya ditolak (`Code not found ... imagingstudy-status`, RuleNumber 10151). Sekali POST, statusnya tetap `available`. Jangan POST ImagingStudy ke production cuma buat iseng.
+
+6. **Encounter close di production**: body yang sama kayak staging (PUT `finished` + `diagnosis` + `statusHistory` start/end) langsung lolos, ga ada field wajib tambahan.
+
+### Checklist 19 resource: body paling minim yang lolos production
+
+Semua item di bawah **✅ confirmed PASS di production** tanggal 2026-10-20. Isinya sengaja seminim mungkin. Kolom "Isi minimal" nunjukin per field: **`0`** artinya angka nol diterima, **`1`** artinya `0` ditolak jadi harus 1, **template** artinya field kode/teks yang wajib ada dan diisi pakai nilai netral (teks `"-"` kalau bebas). Referensi yang selalu dipake: `Patient/<ihs>`, `Practitioner/<ihs>`, `Organization/<orgId>`, `Location/<id>` (lihat poin 1 di atas), `Encounter/<id>`. Identifier pakai `kemkesResourceIdentifierSystem(<segment>, orgId)`.
+
+| ✓ | # | Resource | Fungsi SDK | Isi minimal | Angka |
+|---|---|---|---|---|---|
+| ✅ | 1 | Encounter | `fhir.encounter.encounterCreate` | template: `status: "arrived"`, `class` AMB, participant ATND + dokter, `location`, `statusHistory`, `serviceProvider`, identifier `encounter` | – |
+| ✅ | 2 | Condition | `fhir.condition.conditionDiagnosis` | template: ICD-10 `Z00.0` (General medical examination), `clinicalStatus` active, category `encounter-diagnosis` | – |
+| ✅ | 3 | Observation | `fhir.observationTtv.observationCreate` | template: LOINC `29463-7` Body weight, category vital-signs, `issued` + `performer` wajib | `valueQuantity.value` **0** |
+| ✅ | 4 | Procedure | `fhir.procedure.procedureCreate` | template: ICD-9-CM `89.7` (General physical examination), `status: "completed"`, category SNOMED `103693007`, `performedPeriod`, performer dokter | – |
+| ✅ | 5 | Composition (diet) | `fhir.composition.compositionEdukasiDiet` | template: type LOINC `18842-5`, category `LP173421-1`, section LOINC `42344-2`, `section.text.div: "-"`, identifier `composition` | – |
+| ✅ | 6 | Immunization | `fhir.immunization.immunizationImunisasiDilakukanOlehNakes` | template: body Immunization di atas (KFA `93001282` + CVX `198`, 2 performer AP+EP, reason dasar/ideal), `lotNumber: "0"` | `doseQuantity.value` **0** |
+| ✅ | 7 | MedicationRequest | `fhir.medicationRequest.medicationrequestCreate` | template: `intent: "order"`, identifier `prescription` + `prescription-item`, `authoredOn`, `dosageInstruction.text: "-"` | dose / quantity / dispenseInterval / expectedSupplyDuration **1** (0 ditolak) |
+| ✅ | 8 | MedicationDispense | `fhir.medicationDispense.medicationdispenseCreate` | template: identifier `prescription` + `prescription-item`, category outpatient, `location` farmasi, `authorizingPrescription`, `whenPrepared`/`whenHandedOver` | quantity / daysSupply **1** (0 ditolak) |
+| ✅ | 9 | AllergyIntolerance | `fhir.allergyIntolerance.allergyintoleranceCreate` | template: SNOMED `716186003` "No known allergy", category `medication`, identifier `allergy` | – |
+| ✅ | 10 | ImagingStudy | `fhir.imagingStudy.imagingstudyPostSingleImage` | template: identifier ACSN (`acsn` segment, sama dengan ServiceRequest), modality DCM `DX`, `basedOn` ServiceRequest. ⚠️ ga bisa ditarik lagi (poin 5) | `numberOfSeries` / `numberOfInstances` **0** |
+| ✅ | 11 | ServiceRequest | `fhir.serviceRequest.servicerequestLaboratoriumNonRujukanEksternal` | template: LOINC `57743-7`, category SNOMED `108252007`, identifier `servicerequest` + `acsn`, `performer` wajib, `reasonCode.text: "-"` | – |
+| ✅ | 12 | ClinicalImpression | `fhir.clinicalImpression.clinicalimpressionCreate` | template: SNOMED `312850006`, `summary: "-"`, assessor dokter | – |
+| ✅ | 13 | Specimen | `fhir.specimen.specimenCreateNonRujukan` | template: SNOMED `119297000` Blood specimen, `request` = ServiceRequest (wajib), identifier `specimen` + assigner org | `collection.quantity.value` **0** |
+| ✅ | 14 | DiagnosticReport | `fhir.diagnosticReport.diagnosticreportCreate` | template: LOINC `57743-7`, category v2-0074 `HM`, `basedOn` + `specimen` + `result` (Observation #3), identifier `diagnostic/<org>/lab` | – |
+| ✅ | 15 | CarePlan | `fhir.carePlan.careplanPost` | template: `intent: "plan"`, category SNOMED `736271009`, `title`/`description: "-"` | – |
+| ✅ | 16 | MedicationStatement | `fhir.medicationStatement.medicationstatementCreate` | template: category outpatient, `context` Encounter (wajib), `informationSource` pasien, `dosage.text: "-"` | `doseQuantity.value` **0** |
+| ✅ | 17 | QuestionnaireResponse | `fhir.questionnaireResponse.questionnaireresponseCreate` | template: `Questionnaire/Q0007`, cukup **1 item** (`1.1`, jawaban `OV000052` Sesuai) | – |
+| ✅ | 18 | Medication | `fhir.medication.medicationCreate` | template: KFA `93000149` (Methylprednisolone 8 mg Tablet), form `BS066` tablet, `medicationTypeExtension(nonCompound)` | – |
+| ✅ | 19 | EpisodeOfCare | `fhir.episodeOfCare.episodeofcareCreate` | template: `status: "active"` (bukan finished), type `TB-SO`, `diagnosis` = Condition #2, `careManager` dokter. ⚠️ otomatis kedaftar ke registry TB (poin 4) | – |
+
+Urutan create yang dipake (ngikutin dependency): Encounter → Medication → Condition → Observation → Procedure → Composition → Immunization → MedicationRequest → MedicationDispense → AllergyIntolerance → ServiceRequest → ClinicalImpression → Specimen → DiagnosticReport → ImagingStudy → CarePlan → MedicationStatement → QuestionnaireResponse → EpisodeOfCare → close Encounter.
