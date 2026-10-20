@@ -16,9 +16,10 @@ deno add jsr:@harizinside/satusehat
 
 **Full step-by-step integration guide (real order of operations, gotchas, confirmed-working examples): see [`wiki/`](wiki/Home.md).**
 
-Covers the platform's public surface: OAuth2 client-credentials, 39+ FHIR R4
+Covers the platform's public surface: OAuth2 client-credentials, 40+ FHIR R4
 resources (including Appointment/HealthcareService/AppointmentResponse/
-PractitionerRole/Slot scheduling, FamilyMemberHistory, and
+PractitionerRole/Slot scheduling, FamilyMemberHistory, **MedicationStatement**
+for the Rawat Jalan/Gigi "Riwayat Pengobatan" flow, and
 **DocumentReference** for the Farmasi e-Resep flow), Master Data (wilayah +
 sarana), KFA (farmasi/alkes formulary & pricing), KYC (faskes), national RME
 consent/link, the Rawat Jalan, Gigi, and **Farmasi (e-Resep + dispensing)**

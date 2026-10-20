@@ -63,6 +63,7 @@ Ini semua udah difix di kode (interface-nya diubah jadi required), dicatet di si
 - `MedicationRequest.identifier`
 - Encounter closing (`PUT`) — `identifier` dan `statusHistory` (tiap entry butuh `start` DAN `end`, bukan cuma salah satu).
 - `ServiceRequest` (kontrol kembali) — `performer`.
+- `MedicationStatement.context` — wajib `Encounter/<id>` (`RuleNumber: 10438`), walau FHIR R4 bilang optional. Confirmed e2e staging 2026-10-20 di `fhir/medicationstatement.ts` (create/byId/search/PATCH/PUT semua PASS).
 
 ## PATCH content-type (sudah difix global, bukan per-resource)
 

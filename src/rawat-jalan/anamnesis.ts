@@ -25,7 +25,7 @@ export interface ConditionKeluhanUtamaBody {
   encounter: {
     reference?: string;
   };
-  onsetAge: {
+  onsetAge?: {
     value?: number;
     unit?: string;
     system?: string;
@@ -37,7 +37,7 @@ export interface ConditionKeluhanUtamaBody {
     display?: string;
   };
   note?: Array<Record<string, unknown>>;
-  onsetPeriod: {
+  onsetPeriod?: {
     start?: string;
     end?: string;
   };
@@ -133,7 +133,7 @@ export interface MedicationstatementRiwayatPengobatanObatDariFasyankesSendiriBod
   category: {
     coding?: Array<Record<string, unknown>>;
   };
-  medicationCodeableConcept: {
+  medicationCodeableConcept?: {
     coding?: Array<Record<string, unknown>>;
   };
   subject: {
@@ -151,7 +151,7 @@ export interface MedicationstatementRiwayatPengobatanObatDariFasyankesSendiriBod
     reference?: string;
   };
   contained?: Array<Record<string, unknown>>;
-  medicationReference: {
+  medicationReference?: {
     reference?: string;
     display?: string;
   };
@@ -160,8 +160,8 @@ export interface MedicationstatementRiwayatPengobatanObatDariFasyankesSendiriBod
 /** MedicationStatement - Riwayat Pengobatan (Obat dari Fasyankes Sendiri) — POST /MedicationStatement */
 export async function medicationstatementRiwayatPengobatanObatDariFasyankesSendiri(
   client: SatuSehatClient, body: MedicationstatementRiwayatPengobatanObatDariFasyankesSendiriBody
-): Promise<unknown> {
+): Promise<FhirResource<"MedicationStatement">> {
   return client.request("POST", "/MedicationStatement", {
     body: body as unknown as Record<string, unknown>,
-  }) as Promise<unknown>;
+  }) as Promise<FhirResource<"MedicationStatement">>;
 }

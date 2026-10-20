@@ -26,7 +26,7 @@ export interface ObservationTdSistolikBody {
   effectiveDateTime?: string;
   issued?: string;
   performer?: Array<Record<string, unknown>>;
-  valueQuantity: {
+  valueQuantity?: {
     value?: number;
     unit?: string;
     system?: string;
@@ -36,7 +36,7 @@ export interface ObservationTdSistolikBody {
     coding?: Array<Record<string, unknown>>;
   };
   valueString?: string;
-  valueCodeableConcept: {
+  valueCodeableConcept?: {
     coding?: Array<Record<string, unknown>>;
   };
 }

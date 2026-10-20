@@ -44,6 +44,7 @@ import * as fhirLocation from "./fhir/location.js";
 import * as fhirMedication from "./fhir/medication.js";
 import * as fhirMedicationDispense from "./fhir/medicationdispense.js";
 import * as fhirMedicationRequest from "./fhir/medicationrequest.js";
+import * as fhirMedicationStatement from "./fhir/medicationstatement.js";
 import * as fhirObservationTtv from "./fhir/observation-ttv.js";
 import * as fhirOrganization from "./fhir/organization.js";
 import * as fhirPatient from "./fhir/patient.js";
@@ -153,6 +154,7 @@ export {
   fhirMedication,
   fhirMedicationDispense,
   fhirMedicationRequest,
+  fhirMedicationStatement,
   fhirObservationTtv,
   fhirOrganization,
   fhirPatient,
@@ -279,6 +281,7 @@ export type FhirNamespaces = {
   medication: Bound<typeof fhirMedication>;
   medicationDispense: Bound<typeof fhirMedicationDispense>;
   medicationRequest: Bound<typeof fhirMedicationRequest>;
+  medicationStatement: Bound<typeof fhirMedicationStatement>;
   observationTtv: Bound<typeof fhirObservationTtv>;
   organization: Bound<typeof fhirOrganization>;
   patient: Bound<typeof fhirPatient>;
@@ -433,6 +436,7 @@ export function createSatuSehatClient(config: SatuSehatClientConfig): SatuSehatC
       medication: bindModule(client, fhirMedication),
       medicationDispense: bindModule(client, fhirMedicationDispense),
       medicationRequest: bindModule(client, fhirMedicationRequest),
+      medicationStatement: bindModule(client, fhirMedicationStatement),
       observationTtv: bindModule(client, fhirObservationTtv),
       organization: bindModule(client, fhirOrganization),
       patient: bindModule(client, fhirPatient),

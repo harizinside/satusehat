@@ -166,6 +166,7 @@ function stripNumbering(name) {
 const KNOWN_RESOURCES = new Set([
   "Patient", "Practitioner", "Organization", "Location", "Encounter", "Condition",
   "Observation", "Composition", "Procedure", "Medication", "MedicationRequest",
+  "MedicationStatement",
   "MedicationDispense", "DiagnosticReport", "AllergyIntolerance", "ClinicalImpression",
   "Immunization", "ImagingStudy", "EpisodeOfCare", "CarePlan", "QuestionnaireResponse",
   "ServiceRequest", "Specimen", "RelatedPerson", "Coverage", "CoverageEligibilityRequest",
@@ -294,12 +295,24 @@ function fieldEntry(key, value) {
   return { name, type: scalarType(value) };
 }
 
+// FHIR choice-type (`medication[x]`, `value[x]`, ...) prefix of a field name.
+const CHOICE_PREFIX = /^(medication|value|effective|occurrence|onset|abatement|performed|deceased|multipleBirth|timing|asNeeded|serviced|item)(?=[A-Z])/;
+
 function renderFields(fields, indent) {
   const pad = " ".repeat(indent);
+  // Merged examples can carry several variants of one choice type (e.g.
+  // medicationReference + medicationCodeableConcept). FHIR allows exactly
+  // one, so none of them can be required.
+  const prefixCount = new Map();
+  for (const f of fields) {
+    const p = f.name.match(CHOICE_PREFIX)?.[1];
+    if (p) prefixCount.set(p, (prefixCount.get(p) ?? 0) + 1);
+  }
+  const isChoiceSibling = (f) => (prefixCount.get(f.name.match(CHOICE_PREFIX)?.[1]) ?? 0) > 1;
   return fields
     .map((f) =>
       f.fields
-        ? `${pad}${f.name}: {\n${renderFields(f.fields, indent + 2)}\n${pad}};`
+        ? `${pad}${f.name}${isChoiceSibling(f) ? "?" : ""}: {\n${renderFields(f.fields, indent + 2)}\n${pad}};`
         : `${pad}${f.name}?: ${f.type};`,
     )
     .join("\n");
