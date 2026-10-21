@@ -6,6 +6,7 @@
 * [Alur Rawat Jalan](Rawat-Jalan-Flow.md)
 * [Alur Gigi](Gigi-Flow.md)
 * [Alur Farmasi](Farmasi-Flow.md)
+* [Enkripsi Webhook](Webhook-Encryption.md)
 * [Master Data dan KFA](Master-Data-and-KFA.md)
 * [KYC dan RME](KYC-and-RME.md)
 * [Known Issues](Known-Issues.md)

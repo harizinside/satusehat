@@ -5,3 +5,6 @@ dist-test/
 *.log
 # Postman collection sources used to regenerate src/ — never committed.
 *.postman_collection.json
+.DS_Store
+# SATUSEHAT portal HPKE sample (download from portal; holds .env with keys)
+Javascript/

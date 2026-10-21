@@ -1,6 +1,7 @@
 import { SatuSehatClient, type SatuSehatClientConfig } from "./core/client.js";
 import { SatuSehatApiError } from "./core/http.js";
 import * as coding from "./fhir/coding/index.js";
+import { isUnbound } from "./core/unbound.js";
 import * as auth from "./common/auth.js";
 import * as organization from "./common/organization.js";
 import * as search from "./common/search.js";
@@ -211,6 +212,12 @@ export {
 };
 
 export { nikIdentifier } from "./common/search.js";
+export {
+  createWebhookHandler,
+  decryptWebhook,
+  parseWebhookPayload,
+  parseWebhookPayloadAs,
+} from "./klaim-swasta/webhook.js";
 export type { AccessTokenResult, CredentialsOverride } from "./common/auth.js";
 export type { OrganizationInput, LocationInput } from "./common/organization.js";
 export type { PersonSearchParams } from "./common/search.js";
@@ -222,9 +229,13 @@ export type {
   TransactionBundleOptions,
 } from "./rawat-jalan/bundle.js";
 export type {
+  DecryptedWebhook,
   SatuSehatWebhookPayload,
+  WebhookEncryptionConfig,
   WebhookMethod,
 } from "./klaim-swasta/webhook.js";
+export { openHpkeMessage, sealHpkeMessage } from "./core/hpke.js";
+export type { HpkeOptions, HpkeSuite } from "./core/hpke.js";
 export { SatuSehatClient, SatuSehatApiError };
 export type { SatuSehatClientConfig, SatuSehatEnvironment } from "./core/client.js";
 export type { FhirBundle, FhirPatchOperation, FhirResource } from "./fhir/types.js";
@@ -232,11 +243,15 @@ export type { Coding, CodingSet } from "./fhir/types.js";
 
 /**
  * Maps `fn(client, ...args)` to `fn(...args)` so module namespaces can hang
- * off a client instance: `satusehat.search.searchPatient(params)`.
+ * off a client instance: `satusehat.search.searchPatient(params)`. Functions
+ * whose first parameter isn't a `SatuSehatClient` (marked via `markUnbound`)
+ * pass through unchanged.
  */
 export type Bound<T> = {
-  [K in keyof T]: T[K] extends (client: SatuSehatClient, ...args: infer A) => infer R
-    ? (...args: A) => R
+  [K in keyof T]: T[K] extends (client: infer C, ...args: infer A) => infer R
+    ? [C] extends [SatuSehatClient]
+      ? (...args: A) => R
+      : T[K]
     : T[K];
 };
 
@@ -244,7 +259,7 @@ function bindModule<T extends object>(client: SatuSehatClient, mod: T): Bound<T>
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(mod)) {
     out[key] =
-      typeof value === "function"
+      typeof value === "function" && !isUnbound(value)
         ? (...args: unknown[]) =>
             (value as (c: SatuSehatClient, ...a: unknown[]) => unknown)(client, ...args)
         : value;

@@ -134,6 +134,34 @@ import { icd9cmCoding, searchIcd9cm } from "@harizinside/satusehat/icd9cm";
 searchIcd10("cholera", 5); // -> Coding[] matched by display substring
 ```
 
+## HPKE (RFC 9180) — encrypted webhooks
+
+SATUSEHAT encrypts every webhook body with HPKE (Auth or AuthPSK mode).
+`createWebhookHandler` turns the portal config into a Fetch-API endpoint
+(`(Request) => Promise<Response>`) for Next.js, Hono, Bun, Deno or Workers;
+`decryptWebhook` is the same thing for Express. Pure `node:crypto`, no new
+dependency; verified against a real sandbox portal message.
+
+```ts
+// Next.js: app/api/satusehat/webhook/route.ts   (Hono: app.post(path, (c) => handler(c.req.raw)))
+import { createWebhookHandler } from "@harizinside/satusehat";
+
+export const POST = createWebhookHandler({
+  suite: { kem: process.env.HPKE_KEM!, kdf: process.env.HPKE_KDF!, aead: process.env.HPKE_AEAD! },
+  privateKey: process.env.HPKE_PRIVATE_KEY!,                 // never leaves your server
+  satusehatPublicKey: process.env.HPKE_SATUSEHAT_PUBLIC_KEY!, // from the portal
+  psk: { key: process.env.HPKE_PSK!, id: process.env.HPKE_PSK_ID! }, // omit for Auth mode
+  onWebhook: async ({ payload, plaintext }) => {
+    // payload?.meta.method → "chargeItemSubmission", ...
+  },
+});
+```
+
+Responds 200 on success, 400 when the body doesn't decrypt/authenticate,
+500 when `onWebhook` throws. Lower-level `openHpkeMessage` / `sealHpkeMessage`
+are exported too. Setup walkthrough (keys, portal fields, Express, Hono):
+[`wiki/Webhook-Encryption.md`](wiki/Webhook-Encryption.md).
+
 ## Codegen
 
 Modules for the big collections were generated from the official SATU SEHAT
@@ -181,6 +209,8 @@ live. Highlights:
   (your own endpoint). `klaimSwasta.webhook` provides typed parsers
   (`parseWebhookPayloadAs(body, "chargeItemSubmission")`) plus
   `sendWebhookCallback()` for the acknowledgement call.
+- **Webhook bodies are HPKE-encrypted** — receive them with
+  `createWebhookHandler` / `decryptWebhook`; see [HPKE](#hpke-rfc-9180--encrypted-webhooks).
 
 ## Scripts
 
@@ -190,6 +220,9 @@ live. Highlights:
 | `npm run generate` | regenerate FHIR modules (needs source collections re-supplied, see Codegen) |
 | `npm run generate:icd` | regenerate ICD-10/9-CM data (needs source CSVs re-supplied) |
 | `npm run smoke` | staging smoke test (see below) |
+| `npm run hpke-check` | HPKE Auth+AuthPSK round-trip + tamper tests across every supported ciphersuite (no external deps) |
+| `npm run bind-check` | client namespaces pass pure helpers (`nikIdentifier`, `buildTransactionBundle`, KYC crypto, webhook parsers) through unbound |
+| `npm run hpke-interop` | HPKE interop vs the portal sample code, downloaded into `Javascript/` (gitignored; run `npm install` there first). Skips if absent |
 
 ## Smoke test (staging)
 
@@ -203,6 +236,12 @@ Mints a token, searches master-data provinces, and (optionally, with
 ## Verification status
 
 - `npm run build` (tsc, strict): clean.
+- `npm run hpke-check`: 74/74 (round-trip, tamper, wrong AAD/PSK, short PSK,
+  webhook handler 200/400).
+- **HPKE verified against SATUSEHAT sandbox**: the portal's encryption-test
+  message decrypts via `createWebhookHandler` (AuthPSK, X25519/HKDF-SHA256/AES-128-GCM, no AAD).
+- `npm run hpke-interop`: 90/90 against the portal's hpke-js sample — every
+  KEM × KDF × AEAD, Auth and AuthPSK, seal/open in both directions.
 - **Live-tested against SATU SEHAT staging**, not just compiled: full Rawat
   Jalan flow (23/23 steps, incl. MedicationRequest/MedicationDispense), full
   Gigi flow (14/14 steps), Immunization, Master Wilayah + Sarana + most KFA,

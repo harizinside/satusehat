@@ -27,6 +27,9 @@
     "generate": "node scripts/generate-modules.mjs",
     "generate:icd": "node scripts/generate-icd.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "hpke-check": "node scripts/hpke-check.mjs",
+    "hpke-interop": "node scripts/hpke-interop.mjs",
+    "bind-check": "node scripts/bind-check.mjs",
     "check:jsr": "npx --yes jsr publish --dry-run --allow-dirty"
   },
   "engines": {

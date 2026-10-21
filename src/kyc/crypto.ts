@@ -7,6 +7,7 @@ import {
   randomBytes,
   constants as cryptoConstants,
 } from "node:crypto";
+import { markUnbound } from "../core/unbound.js";
 
 const BEGIN_TAG = "-----BEGIN ENCRYPTED MESSAGE-----";
 const END_TAG = "-----END ENCRYPTED MESSAGE-----";
@@ -83,3 +84,5 @@ export function decryptKycMessage(message: string, privateKeyPem: string, oaepHa
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 }
+
+markUnbound(generateKycKeyPair, encryptKycMessage, decryptKycMessage);

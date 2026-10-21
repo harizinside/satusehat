@@ -1,5 +1,6 @@
 import type { SatuSehatClient } from "../core/client.js";
 import type { FhirResource } from "../fhir/types.js";
+import { markUnbound } from "../core/unbound.js";
 
 /**
  * FHIR transaction Bundle builder shared by the "Bundle Rawat Jalan" and
@@ -85,3 +86,5 @@ export async function submitVisitBundle(
 
 /** Re-export for callers building Composite bundles from typed resources. */
 export type { FhirResource };
+
+markUnbound(buildTransactionBundle);

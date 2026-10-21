@@ -1,5 +1,6 @@
 import type { SatuSehatClient } from "../core/client.js";
 import { IDENTIFIER_SYSTEM } from "../fhir/coding/identifiers.js";
+import { markUnbound } from "../core/unbound.js";
 
 /** FHIR search parameters shared by Patient/Practitioner lookups. */
 export interface PersonSearchParams {
@@ -57,3 +58,5 @@ export async function searchPractitioner(
 export async function getPractitionerById(client: SatuSehatClient, id: string): Promise<unknown> {
   return client.request("GET", `/Practitioner/${encodeURIComponent(id)}`);
 }
+
+markUnbound(nikIdentifier);
