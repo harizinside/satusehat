@@ -3,6 +3,7 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch: # retry a partially failed publish
 
 permissions:
   contents: read
@@ -12,8 +13,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -21,5 +22,12 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
-      - run: npm publish --access public
+      # Skip when this version is already on npm so a JSR-only retry can pass.
+      - run: |
+          SPEC="$(node -p 'const p=require("./package.json"); p.name+"@"+p.version')"
+          if npm view "$SPEC" version --prefer-online >/dev/null 2>&1; then
+            echo "$SPEC already on npm, skipping"
+          else
+            npm publish --access public
+          fi
       - run: npx --yes jsr publish
