@@ -233,3 +233,39 @@ Urutan create yang dipake (ngikutin dependency): Encounter → Medication → Co
 | ❌ Tetap butuh kode klinis beneran | 6 |
 
 Catatan: resource 🟡 tetap nyatet obat/vaksin beneran. KFA cuma bikin field-nya bisa diisi, isinya tetap ga netral. Kalau mau test koneksi production dengan dampak sekecil mungkin, cukup kirim yang ✅. Jangan kirim ImagingStudy sama EpisodeOfCare kalau ga ada kejadian klinisnya.
+
+### Template TTV (Tanda-Tanda Vital) — semua lolos `value: 0` di production
+
+Satu template Observation dipake buat semua TTV. Yang beda per jenis cuma `code` (LOINC) sama satuan `valueQuantity`. Kode dan satuannya diambil dari Postman collection resmi (`04. Hasil Pemeriksaan Fisik`).
+
+```ts
+await client.fhir.observationTtv.observationCreate({
+  resourceType: "Observation",
+  status: "final",
+  category: [{ coding: [{ system: coding.SYSTEM.OBSERVATION_CATEGORY, code: "vital-signs", display: "Vital Signs" }] }],
+  code: { coding: [{ system: coding.SYSTEM.LOINC, code: LOINC, display: DISPLAY }] },
+  subject: { reference: `Patient/${patientId}` },
+  encounter: { reference: `Encounter/${encounterId}` },
+  performer: [{ reference: `Practitioner/${practitionerId}` }], // wajib (RuleNumber 10383)
+  effectiveDateTime: now,
+  issued: now,                                                  // wajib (RuleNumber 10296)
+  valueQuantity: { value: 0, unit: UNIT, system: coding.SYSTEM.UCUM, code: UCUM_CODE },
+});
+```
+
+| ✓ | TTV | LOINC | display | `unit` | `code` (UCUM) | `value: 0` |
+|---|---|---|---|---|---|---|
+| ✅ | TD Sistolik | `8480-6` | Systolic blood pressure | `mm[Hg]` | `mm[Hg]` | diterima |
+| ✅ | TD Diastolik | `8462-4` | Diastolic blood pressure | `mm[Hg]` | `mm[Hg]` | diterima |
+| ✅ | Suhu Tubuh | `8310-5` | Body temperature | `Cel` | `Cel` | diterima |
+| ✅ | Denyut Jantung (Nadi) | `8867-4` | Heart rate | `{beats}/min` | `{beats}/min` | diterima |
+| ✅ | Pernapasan | `9279-1` | Respiratory rate | `breaths/min` | `/min` | diterima |
+| ✅ | Tinggi Badan | `8302-2` | Body height | `cm` | `cm` | diterima |
+| ✅ | Berat Badan | `29463-7` | Body weight | `kg` | `kg` | diterima |
+| ✅ | Luas Permukaan Tubuh (anak) | `8277-6` | Body surface area | `m2` | `m2` | diterima |
+
+Ketiga kolom ✅ artinya: lolos production 2026-10-20 (Berat Badan) dan 2026-10-21 (7 sisanya), bisa di-GET ulang, dan bisa ditarik pakai PUT `status: "entered-in-error"`.
+
+- **Pernapasan:** `unit` dan `code` emang beda (`breaths/min` vs `/min`), ngikutin contoh resmi. Bukan typo.
+- **Satu `value[x]` aja per Observation.** Jangan kirim `valueCodeableConcept` kosong bareng `valueQuantity`.
+- **SpO2 belum masuk**, karena ga ada di collection dan belum pernah dites.
