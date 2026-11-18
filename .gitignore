@@ -8,3 +8,6 @@ dist-test/
 .DS_Store
 # SATUSEHAT portal HPKE sample (download from portal; holds .env with keys)
 Javascript/
+.satusehat.env
+.omp/
+.claude/settings.json
