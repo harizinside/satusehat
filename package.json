@@ -1,6 +1,6 @@
 {
   "name": "@harizinside/satusehat",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "SATU SEHAT (Kemkes) Platform SDK for Node.js (TypeScript, ESM, zero runtime dependencies)",
   "type": "module",
   "main": "./dist/index.js",
