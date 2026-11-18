@@ -216,7 +216,8 @@ live. Highlights:
 
 | Script | Purpose |
 |---|---|
-| `npm run build` | `tsc` → `dist/` |
+| `npm run build` | `tsc` (TypeScript 7, native Go compiler) → `dist/` |
+| `npm run check:ts-compat` | typecheck the built `dist/*.d.ts` as a consumer on TS 5.1, 5.9 and 6.0 |
 | `npm run generate` | regenerate FHIR modules (needs source collections re-supplied, see Codegen) |
 | `npm run generate:icd` | regenerate ICD-10/9-CM data (needs source CSVs re-supplied) |
 | `npm run smoke` | staging smoke test (see below) |
@@ -235,7 +236,8 @@ Mints a token, searches master-data provinces, and (optionally, with
 
 ## Verification status
 
-- `npm run build` (tsc, strict): clean.
+- `npm run build` (TypeScript 7 tsc, strict): clean. Emitted `dist/` is identical to
+  the TS 5 build; `npm run check:ts-compat` passes on TS 5.1 / 5.9 / 6.0 (consumers on TS ≥5.1).
 - `npm run hpke-check`: 74/74 (round-trip, tamper, wrong AAD/PSK, short PSK,
   webhook handler 200/400).
 - **HPKE verified against SATUSEHAT sandbox**: the portal's encryption-test

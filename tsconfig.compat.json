@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": false,
+    "types": ["node"]
+  },
+  "include": ["scripts/ts-compat.ts"]
+}

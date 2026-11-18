@@ -22,6 +22,8 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
+      # Built d.ts must still typecheck for consumers on TS 5/6.
+      - run: npm run check:ts-compat
       # Skip when this version is already on npm so a JSR-only retry can pass.
       - run: |
           SPEC="$(node -p 'const p=require("./package.json"); p.name+"@"+p.version')"
